@@ -728,7 +728,7 @@ theorem integral_re_trace_wignerMatrix_mul_self {σ2 s : ℝ}
       ↓reduceIte, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
     ring
   simp_rw [(wignerMatrix_isHermitian ξ η _ _).trace_mul_self_eq_sum_norm_sq,
-    ← Complex.ofReal_natCast, ← Complex.ofReal_inv,
+    RCLike.ofReal_eq_complex_ofReal, ← Complex.ofReal_natCast, ← Complex.ofReal_inv,
     ← Complex.ofReal_mul, Complex.ofReal_re]
   rw [integral_const_mul, integral_finsetSum _ fun i _ ↦
     integrable_finsetSum _ fun j _ ↦ integrable_norm_wignerMatrix_apply_sq hξi hηi i j]
@@ -757,7 +757,7 @@ theorem integral_norm_wignerMatrix_sub_sq {ξ' : StrictUpper → Ω → ℂ}
         (n + 1 : ℝ)⁻¹ * ‖wignerMatrix d (fun _ _ ↦ 0) (n + 1) ω‖ ^ 2 := by
     rw [(wignerMatrix_isHermitian d (fun _ _ ↦ 0) ω _).trace_mul_self_eq_sum_norm_sq,
       Matrix.frobenius_norm_sq_eq_sum_normSq]
-    simp only [Complex.normSq_eq_norm_sq,
+    simp only [Complex.normSq_eq_norm_sq, RCLike.ofReal_eq_complex_ofReal,
       ← Complex.ofReal_natCast, ← Complex.ofReal_one, ← Complex.ofReal_add,
       ← Complex.ofReal_inv, ← Complex.ofReal_mul, Complex.ofReal_re]
   have h := integral_re_trace_wignerMatrix_mul_self (ξ := d) (η := fun _ _ ↦ 0) (σ2 := 0)

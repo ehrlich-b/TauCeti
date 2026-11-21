@@ -37,7 +37,8 @@ theorem integral_sq_spectralMeasure_wignerMatrix (n : ℕ) (ω : Ω) :
     (wignerMatrix_isHermitian ξ η ω (n + 1)) 2
   simpa only [pow_two, Fintype.card_fin,
     (wignerMatrix_isHermitian ξ η ω (n + 1)).trace_mul_self_eq_sum_norm_sq,
-    RCLike.re_to_complex, Complex.ofReal_re, Nat.cast_add, Nat.cast_one] using h
+    RCLike.re_to_complex, RCLike.ofReal_eq_complex_ofReal, Complex.ofReal_re,
+    Nat.cast_add, Nat.cast_one] using h
 
 /-- The diagonal squares occur once and the upper-triangular squared norms occur twice. -/
 theorem integral_sq_spectralMeasure_wignerMatrix_coordinates (n : ℕ) (ω : Ω) :

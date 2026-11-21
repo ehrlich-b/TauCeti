@@ -28,13 +28,12 @@ public section
 namespace Matrix
 
 /-- The trace of a Hermitian square is its entrywise squared norm sum. -/
-theorem IsHermitian.trace_mul_self_eq_sum_norm_sq {ι : Type*} [Fintype ι]
-    {A : Matrix ι ι ℂ} (hA : A.IsHermitian) :
-    (A * A).trace = ((∑ i, ∑ j, ‖A i j‖ ^ 2 : ℝ) : ℂ) := by
-  classical
-  simp only [trace, diag_apply, Matrix.mul_apply, Complex.ofReal_sum, Complex.ofReal_pow]
+theorem IsHermitian.trace_mul_self_eq_sum_norm_sq {𝕜 ι : Type*} [RCLike 𝕜] [Fintype ι]
+    {A : Matrix ι ι 𝕜} (hA : A.IsHermitian) :
+    (A * A).trace = ((∑ i, ∑ j, ‖A i j‖ ^ 2 : ℝ) : 𝕜) := by
+  simp only [trace, diag_apply, Matrix.mul_apply, RCLike.ofReal_sum]
   refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
-  rw [← hA.apply j i, Complex.star_def, Complex.mul_conj']
+  rw [← hA.apply j i, RCLike.star_def, RCLike.mul_conj, RCLike.ofReal_pow]
 
 /-- The trace `tr(H X)` of the product of a Hermitian matrix `H` and a skew-Hermitian matrix `X`
 is purely imaginary. -/
