@@ -6,6 +6,7 @@ Authors: Bryan Ehrlich
 module
 
 public import Mathlib.Algebra.BigOperators.Fin
+public import Mathlib.Data.Fintype.Sigma
 public import TauCeti.Algebra.Jordan.Primitive
 
 /-!
@@ -20,6 +21,8 @@ idempotents.
 * `exists_primitive_decomposition`: every idempotent is a sum of orthogonal primitive idempotents.
 * `exists_isJordanFrame`: splitting the unit gives a Jordan frame, including the empty frame
   in the zero algebra.
+* `IsCompleteSystem.exists_refinement`: any complete system refines to a Jordan frame.
+* `exists_isJordanFrame_sum_eq`: any idempotent is the sum of part of a Jordan frame.
 
 ## References
 
@@ -132,5 +135,47 @@ theorem exists_isJordanFrame : ∃ (n : ℕ) (p : Fin n → J), IsJordanFrame p 
   obtain ⟨n, p, hprim, _, horth, hsum⟩ := exists_primitive_decomposition h₁
   exact ⟨n, p, ⟨fun i => (hprim i).nonzero, fun i => (hprim i).idempotent,
     horth, hsum⟩, hprim⟩
+
+/-- Any complete system can be refined to a Jordan frame by splitting each member. -/
+theorem IsCompleteSystem.exists_refinement {ι : Type*} [Fintype ι] {p : ι → J}
+    (hp : IsCompleteSystem p) :
+    ∃ (n : ι → ℕ) (q : (Σ i, Fin (n i)) → J),
+      IsJordanFrame q ∧ ∀ i, (∑ j, q ⟨i, j⟩) = p i := by
+  classical
+  choose n q hprim hfix horth hsum using
+    fun i => exists_primitive_decomposition (hp.idempotent i)
+  let f (a : Σ i, Fin (n i)) := q a.1 a.2
+  have hf (a : Σ i, Fin (n i)) : IsPrimitive (f a) := hprim a.1 a.2
+  refine ⟨n, f, ⟨⟨fun a => (hf a).nonzero, fun a => (hf a).idempotent, ?_, ?_⟩, hf⟩, hsum⟩
+  · rintro ⟨i, x⟩ ⟨j, y⟩ hne
+    by_cases h : i = j
+    · subst j
+      exact horth i x y (fun hxy => hne (by cases hxy; rfl))
+    · have hx : q i x ∈ peirceSpace ℝ (p i) 1 :=
+        mem_peirceSpace.mpr (by simpa using hfix i x)
+      have hy : q j y ∈ peirceSpace ℝ (p j) 1 :=
+        mem_peirceSpace.mpr (by simpa using hfix j y)
+      have hij : p i ∈ peirceSpace ℝ (p j) 0 :=
+        mem_peirceSpace.mpr (by simp [hp.orthogonal j i (Ne.symm h)])
+      have hy₀ : q j y ∈ peirceSpace ℝ (p i) 0 := mem_peirceSpace.mpr (by
+        rw [zero_smul, mul_comm]
+        exact mul_eq_zero_of_mem_peirceSpace_one_of_mem_peirceSpace_zero
+          (hp.idempotent j).eq hy hij)
+      exact mul_eq_zero_of_mem_peirceSpace_one_of_mem_peirceSpace_zero
+        (hp.idempotent i).eq hx hy₀
+  · rw [Fintype.sum_sigma]
+    simp only [f, hsum, hp.sum_eq_one]
+
+/-- An idempotent is the sum of the first part of a Jordan frame formed by refining it and
+its complement. -/
+theorem exists_isJordanFrame_sum_eq {c : J} (hc : IsIdempotentElem c) :
+    ∃ (n m : ℕ) (p : Fin n → J) (q : Fin m → J),
+      IsJordanFrame (Fin.append p q) ∧ (∑ i, p i) = c := by
+  obtain ⟨n, p, hp⟩ := exists_primitiveDecomposition hc
+  obtain ⟨m, q, hq⟩ := exists_primitiveDecomposition hc.one_sub
+  have h := append_primitiveDecomposition hc hc.one_sub hc.mul_one_sub_self hp hq
+  refine ⟨n, m, p, q, ⟨⟨fun i => (h.primitive i).nonzero, fun i => (h.primitive i).idempotent,
+      h.orthogonal, h.sum_eq.trans ?_⟩, h.primitive⟩, hp.sum_eq⟩
+  exact add_sub_cancel c 1
 
 end TauCeti.Jordan
