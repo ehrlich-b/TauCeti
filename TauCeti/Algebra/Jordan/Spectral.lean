@@ -53,26 +53,13 @@ private theorem aeval_eq_sum_lagrange_of_roots_mem {A : Type*} [CommRing A] [Alg
     (hS : ∀ r ∈ (minpoly ℝ a).roots, r ∈ S) {n : ℕ} (e : Fin n ≃ ↥S) (f : ℝ[X]) :
     aeval a f = ∑ i, f.eval (e i : ℝ) • aeval a (Lagrange.basis S id (e i : ℝ)) := by
   classical
-  have hsum :
-      aeval a (∑ i, f.eval (e i : ℝ) • Lagrange.basis S id (e i : ℝ)) = aeval a f := by
-    apply minpoly.aeval_eq_of_eqOn_roots_of_isFormallyReal ha
-    intro r hr
-    let j := e.symm ⟨r, hS r hr⟩
-    have hj : (e j : ℝ) = r := congrArg Subtype.val (e.apply_symm_apply _)
-    simp only [eval_finsetSum, eval_smul, smul_eq_mul]
-    rw [Finset.sum_eq_single j, ← hj]
-    · have h : (Lagrange.basis S id (e j : ℝ)).eval (e j : ℝ) = 1 :=
-        Lagrange.eval_basis_self (v := (id : ℝ → ℝ)) (fun _ _ _ _ h => h) (e j).property
-      rw [h, mul_one]
-    · intro i _ hij
-      have hne : (e i : ℝ) ≠ r := fun h =>
-        hij (e.injective (Subtype.ext (h.trans hj.symm)))
-      have h : (Lagrange.basis S id (e i : ℝ)).eval r = 0 :=
-        Lagrange.eval_basis_of_ne (v := (id : ℝ → ℝ)) hne (hS r hr)
-      rw [h, mul_zero]
-    · simp
-  rw [← hsum, map_sum]
-  exact Finset.sum_congr rfl fun i _ => map_smul (aeval a) _ _
+  have hinterp : aeval a f = aeval a (Lagrange.interpolate S id f.eval) :=
+    minpoly.aeval_eq_of_eqOn_roots_of_isFormallyReal ha fun r hr =>
+      (Lagrange.eval_interpolate_at_node f.eval Function.injective_id.injOn (hS r hr)).symm
+  rw [hinterp, Lagrange.interpolate_apply, map_sum]
+  simp only [map_mul, aeval_C, ← Algebra.smul_def]
+  let w (r : ℝ) := f.eval r • aeval a (Lagrange.basis S id r)
+  exact (Finset.sum_coe_sort S w).symm.trans (e.sum_comp (fun r : S => w r)).symm
 
 private theorem aeval_lagrange_system {A : Type*} [CommRing A] [Algebra ℝ A]
     [IsFormallyReal A] {a : A} (ha : IsIntegral ℝ a) :
@@ -136,7 +123,7 @@ theorem spectralResolution (x : J) :
         (∀ i, p i ∈ powerSpan ℝ x) ∧
           ∀ f : ℝ[X], (↑(powerEval (R := ℝ) x f) : J) = ∑ i, f.eval (coeff i) • p i := by
   let S := powerSubalgebra ℝ x
-  let a : S := ⟨x, by change x ∈ powerSpan ℝ x; simpa using jpow_mem_powerSpan (R := ℝ) x 1⟩
+  let a : S := ⟨x, self_mem_powerSpan x⟩
   obtain ⟨n, p, c, hp, hc, heval⟩ := aeval_lagrange_system (IsIntegral.of_finite ℝ a)
   refine ⟨n, fun i => (p i : J), c, ⟨?_, ?_, ?_, ?_⟩, hc, ?_, ?_, ?_⟩
   · exact fun i hi => hp.nonzero i (Subtype.ext hi)
@@ -150,9 +137,9 @@ theorem spectralResolution (x : J) :
     exact h₂
   · exact fun i => (p i).property
   · intro f
+    rw [powerEval_eq_aeval]
     have h := congrArg S.toSubmodule.subtype (heval f)
     simp only [map_sum, map_smul] at h
-    change (↑(aeval a f) : J) = _
     exact h
 
 end TauCeti.Jordan

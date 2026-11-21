@@ -22,7 +22,7 @@ identity isolates that factor and turns it into a vanishing sum of squares in th
 ## Main results
 
 * `minpoly.splits_of_isFormallyReal`: the minimal polynomial of an element of a
-  formally real real algebra splits over the reals when the element is integral.
+  formally real real algebra splits over the reals.
 * `minpoly.aeval_eq_of_eqOn_roots_of_isFormallyReal`: polynomial evaluation depends
   only on the values at those roots.
 
@@ -75,41 +75,32 @@ private theorem aeval_quadratic_eq_zero {a : A} {z : ℂ} (hz : z.im ≠ 0)
   have hdeg : q.natDegree = 2 := by dsimp [q]; compute_degree!
   exact (by decide : (2 : ℕ) ≠ 0) (hdeg ▸ natDegree_eq_zero_of_isUnit hunit)
 
-/-- An integral element of a formally real real algebra has a split minimal polynomial. -/
-theorem splits_of_isFormallyReal {a : A} (ha : IsIntegral ℝ a) : (minpoly ℝ a).Splits := by
-  have hsq : Squarefree (minpoly ℝ a) :=
-    (minpoly.isRadical ℝ a).squarefree (minpoly.ne_zero ha)
-  refine (IsAlgClosed.splits (p := (minpoly ℝ a).map (algebraMap ℝ ℂ))).of_splits_algebraMap ?_
-  intro z hz
-  have him : z.im = 0 := by
-    by_contra h
-    exact aeval_quadratic_eq_zero h (mem_rootSet'.mp hz).2 hsq
-  exact ⟨z.re, by apply Complex.ext <;> simp [him]⟩
+/-- The minimal polynomial of an element of a formally real real algebra splits. -/
+theorem splits_of_isFormallyReal (a : A) : (minpoly ℝ a).Splits := by
+  by_cases ha : IsIntegral ℝ a
+  · have hsq : Squarefree (minpoly ℝ a) :=
+      (minpoly.isRadical ℝ a).squarefree (minpoly.ne_zero ha)
+    refine (IsAlgClosed.splits (p := (minpoly ℝ a).map (algebraMap ℝ ℂ))).of_splits_algebraMap ?_
+    intro z hz
+    have him : z.im = 0 := by
+      by_contra h
+      exact aeval_quadratic_eq_zero h (mem_rootSet'.mp hz).2 hsq
+    exact ⟨z.re, by apply Complex.ext <;> simp [him]⟩
+  · rw [minpoly.eq_zero ha]
+    exact Splits.zero
 
 /-- Polynomials agreeing on the real roots of the minimal polynomial evaluate equally
 at an integral element of a formally real real algebra. -/
 theorem aeval_eq_of_eqOn_roots_of_isFormallyReal {a : A} (ha : IsIntegral ℝ a) {f g : ℝ[X]}
     (h : ∀ r ∈ (minpoly ℝ a).roots, f.eval r = g.eval r) :
     Polynomial.aeval a f = Polynomial.aeval a g := by
-  classical
-  let m := minpoly ℝ a
-  have hsplit : m.Splits := minpoly.splits_of_isFormallyReal ha
-  have hsep : m.Separable := PerfectField.separable_iff_squarefree.mpr
-    ((minpoly.isRadical ℝ a).squarefree (minpoly.ne_zero ha))
-  have hnodup := Polynomial.nodup_roots hsep
-  have hprod : m = ∏ r ∈ m.roots.toFinset, (X - C r) := calc
-    m = (m.roots.map (fun r => X - C r)).prod := hsplit.eq_prod_roots_of_monic (minpoly.monic ha)
-    _ = _ := by
-      change (m.roots.map _).prod = ((m.roots.toFinset.val).map _).prod
-      rw [Multiset.toFinset_val, Multiset.dedup_eq_self.mpr hnodup]
-  have hdiv : m ∣ f - g := by
-    rw [hprod]
-    refine Finset.prod_dvd_of_coprime
-      ((pairwise_coprime_X_sub_C (Function.injective_id (α := ℝ))).set_pairwise _) ?_
-    intro r hr
-    apply dvd_iff_isRoot.mpr
-    simpa only [IsRoot.def, eval_sub, sub_eq_zero] using h r (Multiset.mem_toFinset.mp hr)
-  obtain ⟨u, hu⟩ := hdiv
+  by_cases hfg : f - g = 0
+  · rw [sub_eq_zero.mp hfg]
+  have hm := minpoly.ne_zero ha
+  have hsep := PerfectField.separable_iff_squarefree.mpr ((minpoly.isRadical ℝ a).squarefree hm)
+  obtain ⟨u, hu⟩ := (minpoly.splits_of_isFormallyReal a).dvd_of_roots_le_roots hm
+    ((Multiset.le_iff_subset (Polynomial.nodup_roots hsep)).mpr
+      (fun r hr => (mem_roots hfg).mpr (by simpa [IsRoot.def] using sub_eq_zero.mpr (h r hr))))
   apply sub_eq_zero.mp
   rw [← map_sub, hu, map_mul, minpoly.aeval, zero_mul]
 
