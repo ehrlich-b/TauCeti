@@ -11,16 +11,23 @@ public import Mathlib.LinearAlgebra.Matrix.Hermitian
 /-!
 # Trace of a Hermitian square
 
-The trace of the square of a Hermitian complex matrix is the sum of its squared entry norms. The
-trace of the product of a Hermitian and a skew-Hermitian matrix is purely imaginary
-(`Matrix.IsHermitian.re_trace_mul_eq_zero_of_conjTranspose_eq_neg`).
+## Main results
+
+* `Matrix.IsHermitian.trace_mul_self_eq_sum_norm_sq`: the trace of a Hermitian square
+  over an `RCLike` field is the sum of the squared entry norms.
+* `Matrix.IsHermitian.re_trace_mul_eq_zero_of_conjTranspose_eq_neg`: the trace of the
+  product of a Hermitian and a skew-Hermitian matrix is purely imaginary.
+
+## References
+
+* Faraut and Korányi, *Analysis on Symmetric Cones*, Chapter II.
 -/
 
 public section
 
 namespace Matrix
 
-/-- The trace of the square of a Hermitian complex matrix is its entrywise squared norm sum. -/
+/-- The trace of a Hermitian square is its entrywise squared norm sum. -/
 theorem IsHermitian.trace_mul_self_eq_sum_norm_sq {ι : Type*} [Fintype ι]
     {A : Matrix ι ι ℂ} (hA : A.IsHermitian) :
     (A * A).trace = ((∑ i, ∑ j, ‖A i j‖ ^ 2 : ℝ) : ℂ) := by
