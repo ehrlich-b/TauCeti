@@ -99,7 +99,7 @@ theorem exists_spectral_frame (x : J) :
     ∃ (n : ℕ) (p : Fin n → J) (coeff : Fin n → ℝ),
       IsJordanFrame p ∧ x = ∑ i, coeff i • p i := by
   classical
-  obtain ⟨_, p, c, hp, _, h⟩ := spectralResolution x
+  obtain ⟨_, p, c, hp, _, h, _, _⟩ := spectralResolution x
   obtain ⟨n, q, hq, heq⟩ := hp.exists_refinement
   let m := Fintype.card (Σ i, Fin (n i))
   let e : Fin m ≃ (Σ i, Fin (n i)) := (Fintype.equivFin _).symm

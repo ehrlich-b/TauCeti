@@ -20,7 +20,8 @@ distinct roots of its minimal polynomial yield the spectral idempotents.
 
 * `IsCompleteSystem`: a finite family of nonzero orthogonal idempotents summing to the unit.
 * `spectralResolution`: each element of a formally real finite-dimensional Jordan algebra
-  admits a spectral resolution with distinct real coefficients.
+  admits a spectral resolution with distinct real coefficients. Its idempotents lie in the
+  span of powers and evaluate every polynomial by its values on the coefficients.
 
 ## References
 
@@ -47,36 +48,11 @@ structure IsCompleteSystem {J ι : Type*} [NonAssocSemiring J] [Fintype ι]
   /-- The members sum to the unit. -/
   sum_eq_one : ∑ i, p i = 1
 
-private theorem aeval_eq_of_eqOn_roots {A : Type*} [CommRing A] [Algebra ℝ A]
-    [IsFormallyReal A] {a : A} (ha : IsIntegral ℝ a) {f g : ℝ[X]}
-    (h : ∀ r ∈ (minpoly ℝ a).roots, f.eval r = g.eval r) :
-    aeval a f = aeval a g := by
-  classical
-  let m := minpoly ℝ a
-  have hsplit : m.Splits := minpoly.splits_of_isFormallyReal ha
-  have hsep : m.Separable := PerfectField.separable_iff_squarefree.mpr
-    ((minpoly.isRadical ℝ a).squarefree (minpoly.ne_zero ha))
-  have hnodup := Polynomial.nodup_roots hsep
-  have hprod : m = ∏ r ∈ m.roots.toFinset, (X - C r) := calc
-    m = (m.roots.map (fun r => X - C r)).prod := hsplit.eq_prod_roots_of_monic (minpoly.monic ha)
-    _ = _ := by
-      change (m.roots.map _).prod = ((m.roots.toFinset.val).map _).prod
-      rw [Multiset.toFinset_val, Multiset.dedup_eq_self.mpr hnodup]
-  have hdiv : m ∣ f - g := by
-    rw [hprod]
-    refine Finset.prod_dvd_of_coprime
-      ((pairwise_coprime_X_sub_C (Function.injective_id (α := ℝ))).set_pairwise _) ?_
-    intro r hr
-    apply dvd_iff_isRoot.mpr
-    simpa only [IsRoot.def, eval_sub, sub_eq_zero] using h r (Multiset.mem_toFinset.mp hr)
-  obtain ⟨u, hu⟩ := hdiv
-  apply sub_eq_zero.mp
-  rw [← map_sub, hu, map_mul, minpoly.aeval, zero_mul]
-
 private theorem aeval_lagrange_system {A : Type*} [CommRing A] [Algebra ℝ A]
     [IsFormallyReal A] {a : A} (ha : IsIntegral ℝ a) :
     ∃ (n : ℕ) (p : Fin n → A) (coeff : Fin n → ℝ),
-      IsCompleteSystem p ∧ Function.Injective coeff ∧ a = ∑ i, coeff i • p i := by
+      IsCompleteSystem p ∧ Function.Injective coeff ∧
+        ∀ f : ℝ[X], aeval a f = ∑ i, f.eval (coeff i) • p i := by
   classical
   let S := (minpoly ℝ a).roots.toFinset
   let b (r : ℝ) := Lagrange.basis S id r
@@ -93,7 +69,7 @@ private theorem aeval_lagrange_system {A : Type*} [CommRing A] [Algebra ℝ A]
   have hmem (i : Fin n) : c i ∈ S := (e i).property
   have heval (f : ℝ[X]) : aeval a f = ∑ i, f.eval (c i) • p i := by
     have hsum : aeval a (∑ i, f.eval (c i) • b (c i)) = aeval a f := by
-      apply aeval_eq_of_eqOn_roots ha
+      apply minpoly.aeval_eq_of_eqOn_roots_of_isFormallyReal ha
       intro r hr
       let j := e.symm ⟨r, Multiset.mem_toFinset.mpr hr⟩
       have hj : c j = r := congrArg Subtype.val (e.apply_symm_apply _)
@@ -105,7 +81,7 @@ private theorem aeval_lagrange_system {A : Type*} [CommRing A] [Algebra ℝ A]
       · simp
     rw [← hsum, map_sum]
     exact Finset.sum_congr rfl fun i _ => map_smul (aeval a) _ _
-  refine ⟨n, p, c, ⟨?_, ?_, ?_, ?_⟩, hc, ?_⟩
+  refine ⟨n, p, c, ⟨?_, ?_, ?_, ?_⟩, hc, heval⟩
   · intro i hi
     have hmin := minpoly.dvd ℝ a (show aeval a (b (c i)) = 0 from hi)
     have hroot : (minpoly ℝ a).IsRoot (c i) :=
@@ -117,14 +93,14 @@ private theorem aeval_lagrange_system {A : Type*} [CommRing A] [Algebra ℝ A]
   · intro i
     change aeval a (b (c i)) * aeval a (b (c i)) = aeval a (b (c i))
     rw [← map_mul]
-    apply aeval_eq_of_eqOn_roots ha
+    apply minpoly.aeval_eq_of_eqOn_roots_of_isFormallyReal ha
     intro s hs
     simp only [eval_mul, hb _ _ (hmem i) (Multiset.mem_toFinset.mpr hs)]
     split_ifs <;> simp
   · intro i j hij
     change aeval a (b (c i)) * aeval a (b (c j)) = 0
     rw [← map_mul, ← map_zero (aeval (R := ℝ) a)]
-    apply aeval_eq_of_eqOn_roots ha
+    apply minpoly.aeval_eq_of_eqOn_roots_of_isFormallyReal ha
     intro s hs
     simp only [eval_zero, eval_mul, hb _ _ (hmem i) (Multiset.mem_toFinset.mpr hs),
       hb _ _ (hmem j) (Multiset.mem_toFinset.mpr hs)]
@@ -133,28 +109,36 @@ private theorem aeval_lagrange_system {A : Type*} [CommRing A] [Algebra ℝ A]
       rw [ite_eq_left hi, ite_eq_right hj, mul_zero]
     · rw [ite_eq_right hi, zero_mul]
   · simpa using (heval 1).symm
-  · simpa using heval X
 
 variable {J : Type*} [NonAssocCommRing J] [Module ℝ J] [SMulCommClass ℝ J J]
   [IsScalarTower ℝ J J] [IsCommJordan J] [Module.Finite ℝ J] [IsFormallyReal J]
 
 /-- Every element of a finite-dimensional formally real Jordan algebra is a linear combination
-of a complete system of idempotents with pairwise distinct real coefficients. -/
+of a complete system of idempotents with pairwise distinct real coefficients.
+The idempotents lie in the span of powers and give the polynomial evaluation formula. -/
 theorem spectralResolution (x : J) :
     ∃ (n : ℕ) (p : Fin n → J) (coeff : Fin n → ℝ),
-      IsCompleteSystem p ∧ Function.Injective coeff ∧ x = ∑ i, coeff i • p i := by
+      IsCompleteSystem p ∧ Function.Injective coeff ∧ (x = ∑ i, coeff i • p i) ∧
+        (∀ i, p i ∈ powerSpan ℝ x) ∧
+          ∀ f : ℝ[X], (↑(powerEval (R := ℝ) x f) : J) = ∑ i, f.eval (coeff i) • p i := by
   let S := powerSubalgebra ℝ x
   let a : S := ⟨x, by change x ∈ powerSpan ℝ x; simpa using jpow_mem_powerSpan (R := ℝ) x 1⟩
-  obtain ⟨n, p, c, hp, hc, h⟩ := aeval_lagrange_system (IsIntegral.of_finite ℝ a)
-  refine ⟨n, fun i => (p i : J), c, ⟨?_, ?_, ?_, ?_⟩, hc, ?_⟩
+  obtain ⟨n, p, c, hp, hc, heval⟩ := aeval_lagrange_system (IsIntegral.of_finite ℝ a)
+  refine ⟨n, fun i => (p i : J), c, ⟨?_, ?_, ?_, ?_⟩, hc, ?_, ?_, ?_⟩
   · exact fun i hi => hp.nonzero i (Subtype.ext hi)
   · exact fun i => congrArg Subtype.val (hp.idempotent i)
   · exact fun i j hij => congrArg Subtype.val (hp.orthogonal i j hij)
   · have h₁ := congrArg S.toSubmodule.subtype hp.sum_eq_one
     rw [map_sum] at h₁
     exact h₁
-  · have h₂ := congrArg S.toSubmodule.subtype h
-    simp only [map_sum, map_smul] at h₂
+  · have h₂ := congrArg S.toSubmodule.subtype (heval X)
+    simp only [aeval_X, eval_X, map_sum, map_smul] at h₂
     exact h₂
+  · exact fun i => (p i).property
+  · intro f
+    have h := congrArg S.toSubmodule.subtype (heval f)
+    simp only [map_sum, map_smul] at h
+    change (↑(aeval a f) : J) = _
+    exact h
 
 end TauCeti.Jordan

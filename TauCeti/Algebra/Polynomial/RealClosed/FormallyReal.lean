@@ -23,6 +23,8 @@ identity isolates that factor and turns it into a vanishing sum of squares in th
 
 * `minpoly.splits_of_isFormallyReal`: the minimal polynomial of an element of a
   formally real real algebra splits over the reals when the element is integral.
+* `minpoly.aeval_eq_of_eqOn_roots_of_isFormallyReal`: polynomial evaluation depends
+  only on the values at those roots.
 
 ## References
 
@@ -83,5 +85,32 @@ theorem splits_of_isFormallyReal {a : A} (ha : IsIntegral ℝ a) : (minpoly ℝ 
     by_contra h
     exact aeval_quadratic_eq_zero h (mem_rootSet'.mp hz).2 hsq
   exact ⟨z.re, by apply Complex.ext <;> simp [him]⟩
+
+/-- Polynomials agreeing on the real roots of the minimal polynomial evaluate equally
+at an integral element of a formally real real algebra. -/
+theorem aeval_eq_of_eqOn_roots_of_isFormallyReal {a : A} (ha : IsIntegral ℝ a) {f g : ℝ[X]}
+    (h : ∀ r ∈ (minpoly ℝ a).roots, f.eval r = g.eval r) :
+    Polynomial.aeval a f = Polynomial.aeval a g := by
+  classical
+  let m := minpoly ℝ a
+  have hsplit : m.Splits := minpoly.splits_of_isFormallyReal ha
+  have hsep : m.Separable := PerfectField.separable_iff_squarefree.mpr
+    ((minpoly.isRadical ℝ a).squarefree (minpoly.ne_zero ha))
+  have hnodup := Polynomial.nodup_roots hsep
+  have hprod : m = ∏ r ∈ m.roots.toFinset, (X - C r) := calc
+    m = (m.roots.map (fun r => X - C r)).prod := hsplit.eq_prod_roots_of_monic (minpoly.monic ha)
+    _ = _ := by
+      change (m.roots.map _).prod = ((m.roots.toFinset.val).map _).prod
+      rw [Multiset.toFinset_val, Multiset.dedup_eq_self.mpr hnodup]
+  have hdiv : m ∣ f - g := by
+    rw [hprod]
+    refine Finset.prod_dvd_of_coprime
+      ((pairwise_coprime_X_sub_C (Function.injective_id (α := ℝ))).set_pairwise _) ?_
+    intro r hr
+    apply dvd_iff_isRoot.mpr
+    simpa only [IsRoot.def, eval_sub, sub_eq_zero] using h r (Multiset.mem_toFinset.mp hr)
+  obtain ⟨u, hu⟩ := hdiv
+  apply sub_eq_zero.mp
+  rw [← map_sub, hu, map_mul, minpoly.aeval, zero_mul]
 
 end minpoly

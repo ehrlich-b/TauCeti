@@ -85,7 +85,7 @@ Jordan algebra. -/
 theorem traceForm_self_pos [IsCommJordan J] [Module.Finite ℝ J] [IsFormallyReal J] {x : J}
     (hx : x ≠ 0) : 0 < traceForm ℝ x x := by
   classical
-  obtain ⟨n, p, c, hp, _, h⟩ := spectralResolution x
+  obtain ⟨n, p, c, hp, _, h, _, _⟩ := spectralResolution x
   have hdiag (i : Fin n) : p i * (∑ j, c j • p j) = c i • p i := by
     rw [Finset.mul_sum, Finset.sum_eq_single i]
     · rw [mul_smul_comm, hp.idempotent i]

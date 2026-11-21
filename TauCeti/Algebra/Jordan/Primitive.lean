@@ -74,7 +74,7 @@ theorem IsPrimitive.peirceSpace_one_eq_span {c : J} (hc : IsPrimitive c) :
   · intro x hx
     let S := peirceOneSubalgebra (R := ℝ) hc.idempotent
     let y : S := ⟨x, hx⟩
-    obtain ⟨n, q, a, hq, _, hy⟩ := spectralResolution y
+    obtain ⟨n, q, a, hq, _, hy, _, _⟩ := spectralResolution y
     have hq₁ (i : Fin n) : (q i : J) = c := by
       have hfix : c * (q i : J) = q i := by simpa using mem_peirceSpace.mp (q i).property
       have hid : IsIdempotentElem (q i : J) := congrArg Subtype.val (hq.idempotent i).eq
