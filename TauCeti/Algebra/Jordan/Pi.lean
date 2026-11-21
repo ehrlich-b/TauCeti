@@ -5,7 +5,9 @@ Authors: Bryan Ehrlich
 -/
 module
 
+public import Mathlib.Algebra.Algebra.NonUnitalHom
 public import Mathlib.Algebra.Jordan.Basic
+public import Mathlib.LinearAlgebra.Pi
 public import TauCeti.Algebra.Ring.IsFormallyReal
 public import Mathlib.Algebra.Ring.Pi
 
@@ -19,6 +21,7 @@ multiplication on a finite product of real lines makes it a Euclidean Jordan alg
 
 * Products inherit the commutative nonassociative ring structure, the Jordan identity,
   and formal reality from their factors.
+* Coordinate projections and single-coordinate inclusions are multiplicative linear maps.
 
 ## References
 
@@ -53,5 +56,39 @@ instance [∀ i, NonUnitalNonAssocSemiring (A i)] [∀ i, IsFormallyReal (A i)] 
     exact IsFormallyReal.eq_zero_of_mul_self_eq_zero
       (IsFormallyReal.eq_zero_of_add_right (.mul_self (a i)) (eval hs i)
         (congrFun h i))
+
+section CoordinateMaps
+
+variable {R : Type*} [Semiring R] [∀ i, NonUnitalNonAssocSemiring (A i)] [∀ i, Module R (A i)]
+
+/-- Evaluation at a coordinate preserves multiplication and scalar multiplication. -/
+def evalNonUnitalAlgHom (i : ι) : (∀ j, A j) →ₙₐ[R] A i where
+  __ := evalNonUnitalRingHom A i
+  map_smul' _ _ := rfl
+
+/-- Inclusion at a coordinate, with zero in all other coordinates. -/
+def singleNonUnitalAlgHom [DecidableEq ι] (i : ι) : A i →ₙₐ[R] (∀ j, A j) where
+  toFun := Pi.single i
+  map_zero' := (LinearMap.single R A i).map_zero
+  map_add' := (LinearMap.single R A i).map_add
+  map_smul' := (LinearMap.single R A i).map_smul
+  map_mul' x y := by
+    funext j
+    by_cases h : j = i
+    · subst j
+      simp
+    · simp [Pi.single_eq_of_ne h]
+
+/-- Evaluating the projection gives the specified coordinate. -/
+@[simp] theorem evalNonUnitalAlgHom_apply (i : ι) (x : ∀ j, A j) :
+    evalNonUnitalAlgHom (R := R) i x = x i :=
+  (rfl)
+
+/-- The inclusion gives a dependent function supported at one coordinate. -/
+@[simp] theorem singleNonUnitalAlgHom_apply [DecidableEq ι] (i : ι) (x : A i) :
+    singleNonUnitalAlgHom (R := R) i x = Pi.single i x :=
+  (rfl)
+
+end CoordinateMaps
 
 end Pi
