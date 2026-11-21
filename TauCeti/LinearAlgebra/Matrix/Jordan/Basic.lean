@@ -7,7 +7,8 @@ module
 
 public import Mathlib.Algebra.CharP.Invertible
 public import Mathlib.Analysis.RCLike.Lemmas
-public import TauCeti.Algebra.Star.Jordan
+public import TauCeti.Algebra.Algebra.Rat
+public import TauCeti.Algebra.Star.Jordan.SelfAdjoint
 public import TauCeti.LinearAlgebra.Matrix.Trace.Hermitian
 
 /-!
@@ -37,7 +38,7 @@ namespace Matrix
 variable {n K : Type*} [Fintype n] [DecidableEq n] [RCLike K]
 
 local instance : Invertible (2 : Matrix n n K) :=
-  SymAlg.invertibleTwoOfAlgebra (R := ℝ)
+  TauCeti.invertibleTwoOfAlgebraRat _
 
 /-- The real Jordan algebra of Hermitian matrices over a real or complex field. -/
 abbrev HermitianJordan (n K : Type*) [Fintype n] [DecidableEq n] [RCLike K] : Type _ :=
@@ -51,6 +52,10 @@ def toMatrix : HermitianJordan n K →ₗ[ℝ] Matrix n n K where
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
 
+/-- The matrix inclusion forgets the self-adjointness proof and the symmetrization. -/
+theorem toMatrix_apply (x : HermitianJordan n K) : toMatrix x = SymAlg.unsym x.val :=
+  (rfl)
+
 /-- The inclusion into matrices is injective. -/
 theorem toMatrix_injective :
     Function.Injective (toMatrix : HermitianJordan n K → Matrix n n K) :=
@@ -58,16 +63,22 @@ theorem toMatrix_injective :
 
 /-- The underlying matrix is Hermitian. -/
 theorem isHermitian (x : HermitianJordan n K) : (toMatrix x).IsHermitian :=
-  Matrix.isHermitian_iff_isSelfAdjoint.mpr x.property
+  Matrix.isHermitian_iff_isSelfAdjoint.mpr ((SymAlg.mem_selfAdjointJordan ℝ _).mp x.property)
 
 /-- Regard a Hermitian matrix as an element of the Jordan algebra. -/
 def ofMatrix (A : Matrix n n K) (hA : A.IsHermitian) : HermitianJordan n K :=
-  ⟨SymAlg.sym A, Matrix.isHermitian_iff_isSelfAdjoint.mp hA⟩
+  ⟨SymAlg.sym A, (SymAlg.mem_selfAdjointJordan ℝ _).mpr
+    (by simpa only [SymAlg.unsym_sym] using Matrix.isHermitian_iff_isSelfAdjoint.mp hA)⟩
 
 /-- The underlying matrix of a Hermitian matrix regarded as a Jordan element. -/
 @[simp] theorem toMatrix_ofMatrix (A : Matrix n n K) (hA : A.IsHermitian) :
     toMatrix (ofMatrix A hA) = A := by
   exact SymAlg.unsym_sym A
+
+/-- A Jordan element is recovered from its underlying Hermitian matrix. -/
+@[simp] theorem ofMatrix_toMatrix (x : HermitianJordan n K) :
+    ofMatrix (toMatrix x) x.isHermitian = x :=
+  toMatrix_injective (toMatrix_ofMatrix _ _)
 
 /-- A diagonal entry has zero imaginary part. -/
 theorem im_diag_eq_zero (x : HermitianJordan n K) (i : n) :
@@ -76,8 +87,7 @@ theorem im_diag_eq_zero (x : HermitianJordan n K) (i : n) :
 
 /-- The Jordan unit is the identity matrix. -/
 @[simp] theorem toMatrix_one : toMatrix (1 : HermitianJordan n K) = 1 := by
-  change SymAlg.unsym 1 = 1
-  exact SymAlg.unsym_one
+  rw [toMatrix_apply, SymAlg.coe_one_selfAdjointJordan, SymAlg.unsym_one]
 
 /-- The Jordan product is half the sum of the two associative products. -/
 theorem toMatrix_mul (x y : HermitianJordan n K) :

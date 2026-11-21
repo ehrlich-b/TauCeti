@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Data.Matrix.Basis
 public import TauCeti.Algebra.Jordan.Frame.Primitive
-public import TauCeti.LinearAlgebra.Matrix.Jordan
+public import TauCeti.LinearAlgebra.Matrix.Jordan.Basic
 
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.NormNum
@@ -44,16 +44,13 @@ variable {n K : Type*} [Fintype n] [DecidableEq n] [RCLike K]
 
 /-- The Hermitian matrix unit with one in diagonal entry `i`. -/
 def diagonalUnit (i : n) : HermitianJordan n K :=
-  ofMatrix (Matrix.single i i 1) (by
-    apply Matrix.isHermitian_iff_isSelfAdjoint.mpr
-    ext a b
-    simp only [Matrix.star_apply, Matrix.single_apply]
-    simp [and_comm])
+  ofMatrix (Matrix.single i i 1) (by simp [Matrix.IsHermitian])
 
 /-- The matrix entries of a diagonal Jordan matrix unit are those of the usual matrix unit. -/
 @[simp] theorem toMatrix_diagonalUnit (i : n) :
     toMatrix (diagonalUnit (K := K) i) = Matrix.single i i 1 := by
-  simp [diagonalUnit]
+  unfold diagonalUnit
+  exact toMatrix_ofMatrix _ _
 
 private theorem diagonalUnit_ne_zero (i : n) : diagonalUnit (K := K) i ≠ 0 := by
   intro h
@@ -121,28 +118,33 @@ theorem isJordanFrame_diagonalUnit :
       Matrix.single_mul_single_of_ne _ _ _ _ hij, Matrix.single_mul_single_of_ne _ _ _ _ hij.symm]
     simp
   · apply toMatrix_injective
-    simp only [map_sum, toMatrix_diagonalUnit, toMatrix_one]
-    ext i j
-    rw [Matrix.sum_apply, Finset.sum_eq_single i]
-    · simp [Matrix.single_apply, Matrix.one_apply]
-    · intro k _ hk
-      simp [hk]
-    · simp
+    simpa only [map_sum, toMatrix_diagonalUnit, toMatrix_one] using
+      (Matrix.sum_single_one (m := n) (α := K))
 
 variable (K)
 
 /-- The two-by-two Hermitian matrix exchanging the two coordinates. -/
 def coordinateSwap : HermitianJordan (Fin 2) K :=
   ofMatrix (Matrix.single 0 1 1 + Matrix.single 1 0 1) (by
-    apply Matrix.isHermitian_iff_isSelfAdjoint.mpr
-    ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.star_apply])
+    simp [Matrix.IsHermitian, add_comm])
+
+/-- The swap has one in each off-diagonal entry and zero on the diagonal. -/
+@[simp] theorem toMatrix_coordinateSwap :
+    toMatrix (coordinateSwap K) = Matrix.single 0 1 1 + Matrix.single 1 0 1 := by
+  unfold coordinateSwap
+  exact toMatrix_ofMatrix _ _
+
+/-- The coordinate swap is a nonzero witness to the Peirce half-space. -/
+theorem coordinateSwap_ne_zero : coordinateSwap K ≠ 0 := by
+  intro h
+  have hentry := congrArg (fun x : HermitianJordan (Fin 2) K => toMatrix x 0 1) h
+  simp at hentry
 
 /-- The swap lies in the Peirce half-space of the first diagonal matrix unit. -/
 theorem diagonalUnit_zero_mul_coordinateSwap :
     diagonalUnit 0 * coordinateSwap K = (2 : ℝ)⁻¹ • coordinateSwap K := by
   apply toMatrix_injective
-  simp only [toMatrix_mul, map_smul, toMatrix_diagonalUnit, coordinateSwap, toMatrix_ofMatrix]
+  simp only [toMatrix_mul, map_smul, toMatrix_diagonalUnit, toMatrix_coordinateSwap]
   congr 1
   ext i j
   fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Matrix.single_apply]
@@ -150,7 +152,7 @@ theorem diagonalUnit_zero_mul_coordinateSwap :
 /-- The two-by-two coordinate swap squares to the Jordan unit. -/
 theorem coordinateSwap_mul_self : coordinateSwap K * coordinateSwap K = 1 := by
   apply toMatrix_injective
-  simp only [toMatrix_mul_self, coordinateSwap, toMatrix_ofMatrix, toMatrix_one]
+  simp only [toMatrix_mul_self, toMatrix_coordinateSwap, toMatrix_one]
   ext i j
   fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Matrix.single_apply]
 
