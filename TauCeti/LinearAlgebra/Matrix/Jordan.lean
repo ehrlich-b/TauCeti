@@ -60,6 +60,15 @@ theorem toMatrix_injective :
 theorem isHermitian (x : HermitianJordan n K) : (toMatrix x).IsHermitian :=
   Matrix.isHermitian_iff_isSelfAdjoint.mpr x.property
 
+/-- Regard a Hermitian matrix as an element of the Jordan algebra. -/
+def ofMatrix (A : Matrix n n K) (hA : A.IsHermitian) : HermitianJordan n K :=
+  ⟨SymAlg.sym A, Matrix.isHermitian_iff_isSelfAdjoint.mp hA⟩
+
+/-- The underlying matrix of a Hermitian matrix regarded as a Jordan element. -/
+@[simp] theorem toMatrix_ofMatrix (A : Matrix n n K) (hA : A.IsHermitian) :
+    toMatrix (ofMatrix A hA) = A := by
+  exact SymAlg.unsym_sym A
+
 /-- A diagonal entry has zero imaginary part. -/
 theorem im_diag_eq_zero (x : HermitianJordan n K) (i : n) :
     RCLike.im (toMatrix x i i) = 0 :=
