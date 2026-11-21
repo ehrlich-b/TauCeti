@@ -118,7 +118,7 @@ theorem mul_eq_zero_of_peirceBlock_disjoint (hp : IsCompleteSystem p) {i j k l :
 end IsCompleteSystem
 
 /-- The diagonal block of a Jordan frame is spanned by its primitive idempotent. -/
-theorem IsJordanFrame.peirceBlock_diag_eq_span [IsScalarTower ℝ J J] [IsCommJordan J]
+theorem IsJordanFrame.peirceBlock_diag_eq_span [IsCommJordan J]
     [Module.Finite ℝ J] [IsFormallyReal J] (hp : IsJordanFrame p) (i : ι) :
     peirceBlock p s(i, i) = Submodule.span ℝ {p i} := by
   rw [peirceBlock_diag]

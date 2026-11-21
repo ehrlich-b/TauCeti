@@ -10,6 +10,7 @@ public import Mathlib.Algebra.Ring.Idempotent
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Data.Sym.Sym2
 public import Mathlib.Algebra.DirectSum.Module
+public import TauCeti.Algebra.Group.Action.CommMagma
 public import TauCeti.Algebra.Jordan.Peirce
 public import TauCeti.Algebra.Jordan.Frame.Basic
 
@@ -315,11 +316,12 @@ theorem isIdempotentElem_sum (hp : IsCompleteSystem p) (s : Finset ι) :
 
 /-- Left multiplication by a diagonal linear combination acts by the average of the
 two indexed coefficients on each Peirce block. -/
-theorem sum_smul_mul_eq_smul_of_mem_peirceBlock [IsScalarTower ℝ J J]
-    (hp : IsCompleteSystem p) (a : ι → ℝ) {i j : ι} {x : J}
+theorem sum_smul_mul_eq_smul_of_mem_peirceBlock (hp : IsCompleteSystem p) (a : ι → ℝ)
+    {i j : ι} {x : J}
     (hx : x ∈ peirceBlock p s(i, j)) :
     (∑ k, a k • p k) * x = ((a i + a j) / 2) • x := by
   classical
+  let := IsScalarTower.of_commMagma ℝ J
   rw [Finset.sum_mul]
   by_cases hij : i = j
   · subst j

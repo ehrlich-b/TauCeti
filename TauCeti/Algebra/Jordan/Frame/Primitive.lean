@@ -6,6 +6,7 @@ Authors: Bryan Ehrlich
 module
 
 public import Mathlib.Algebra.CharP.Invertible
+public import TauCeti.Algebra.Group.Action.CommMagma
 public import TauCeti.Algebra.Jordan.Peirce.Subalgebra
 public import TauCeti.Algebra.Jordan.Spectral
 
@@ -34,11 +35,12 @@ namespace TauCeti.Jordan
 section PeirceSpace
 
 variable {J : Type*} [NonUnitalNonAssocCommRing J] [Module ℝ J]
-  [SMulCommClass ℝ J J] [IsScalarTower ℝ J J]
+  [SMulCommClass ℝ J J]
 
 /-- If an idempotent has a one-dimensional Peirce `1`-space, it is primitive. -/
 theorem IsPrimitive.of_peirceSpace_one_eq_span {c : J} (hc : IsIdempotentElem c) (h₀ : c ≠ 0)
     (h : peirceSpace ℝ c 1 = Submodule.span ℝ {c}) : IsPrimitive c := by
+  let := IsScalarTower.of_commMagma ℝ J
   refine ⟨h₀, hc, fun q hq hfix => ?_⟩
   have hmem : q ∈ peirceSpace ℝ c 1 := mem_peirceSpace.mpr (by simpa using hfix)
   rw [h] at hmem
@@ -55,6 +57,7 @@ variable [IsCommJordan J] [Module.Finite ℝ J] [IsFormallyReal J]
 /-- The Peirce `1`-space at a primitive idempotent is the line it spans. -/
 theorem IsPrimitive.peirceSpace_one_eq_span {c : J} (hc : IsPrimitive c) :
     peirceSpace ℝ c 1 = Submodule.span ℝ {c} := by
+  let := IsScalarTower.of_commMagma ℝ J
   apply le_antisymm
   · intro x hx
     let S := peirceOneSubalgebra (R := ℝ) hc.idempotent

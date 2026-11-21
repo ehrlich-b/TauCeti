@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.CharP.Invertible
 public import Mathlib.LinearAlgebra.Projection
+public import TauCeti.Algebra.Group.Action.CommMagma
 public import TauCeti.Algebra.Jordan.Peirce
 public import TauCeti.Algebra.Jordan.Spectral
 public import TauCeti.Algebra.Jordan.TraceForm
@@ -101,6 +102,7 @@ theorem traceForm_self_pos [IsCommJordan J] [Module.Finite ℝ J] [IsFormallyRea
   exact Finset.sum_pos' (fun j _ => mul_nonneg (mul_self_nonneg _) (hpos j).le)
     ⟨i, Finset.mem_univ _, mul_pos (mul_self_pos.mpr hi) (hpos i)⟩
 
+omit [IsScalarTower ℝ J J] in
 /-- Formal reality is equivalent to the existence of a symmetric positive definite associative
 bilinear form on a finite-dimensional real Jordan algebra. -/
 theorem formallyReal_iff_exists_associativeForm [IsCommJordan J] [Module.Finite ℝ J] :
@@ -108,6 +110,7 @@ theorem formallyReal_iff_exists_associativeForm [IsCommJordan J] [Module.Finite 
       ∃ B : J →ₗ[ℝ] J →ₗ[ℝ] ℝ,
         (∀ x y, B x y = B y x) ∧ (∀ x ≠ 0, 0 < B x x) ∧
           ∀ x y z, B (x * y) z = B y (x * z) := by
+  let := IsScalarTower.of_commMagma ℝ J
   constructor
   · intro h
     exact ⟨traceForm ℝ, traceForm_comm ℝ,

@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Jordan.Frame.Exists
 public import TauCeti.Algebra.Jordan.Spectral
+public import TauCeti.Algebra.Group.Action.CommMagma
 public import TauCeti.RingTheory.Idempotents.LinearIndependent
 
 /-!
@@ -78,7 +79,7 @@ end Bounds
 section Spectral
 
 variable {J : Type*} [NonAssocCommRing J] [Module ℝ J] [SMulCommClass ℝ J J]
-  [IsScalarTower ℝ J J] [IsCommJordan J] [Module.Finite ℝ J] [IsFormallyReal J]
+  [IsCommJordan J] [Module.Finite ℝ J] [IsFormallyReal J]
 
 /-- Every element admits a decomposition in some Jordan frame, obtained by refining its
 spectral idempotents. -/
@@ -86,6 +87,7 @@ theorem exists_spectral_frame (x : J) :
     ∃ (n : ℕ) (p : Fin n → J) (coeff : Fin n → ℝ),
       IsJordanFrame p ∧ x = ∑ i, coeff i • p i := by
   classical
+  let := IsScalarTower.of_commMagma ℝ J
   obtain ⟨_, p, c, hp, _, h, _, _⟩ := spectralResolution x
   obtain ⟨n, q, hq, heq⟩ := hp.exists_refinement
   let m := Fintype.card (Σ i, Fin (n i))
