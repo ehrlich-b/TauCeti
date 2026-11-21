@@ -17,7 +17,8 @@ multiplication on a finite product of real lines makes it a Euclidean Jordan alg
 
 ## Main results
 
-* Products inherit the Jordan identity and formal reality from their factors.
+* Products inherit the commutative nonassociative ring structure, the Jordan identity,
+  and formal reality from their factors.
 
 ## References
 
@@ -29,6 +30,11 @@ public section
 namespace Pi
 
 variable {ι : Type*} {A : ι → Type*}
+
+/-- A product of commutative nonassociative rings has the pointwise ring structure. -/
+instance [∀ i, NonAssocCommRing (A i)] : NonAssocCommRing (∀ i, A i) where
+  __ := (inferInstance : NonAssocRing (∀ i, A i))
+  mul_comm x y := funext fun i => mul_comm (x i) (y i)
 
 /-- The Jordan identity holds coordinatewise in a product. -/
 instance [∀ i, CommMagma (A i)] [∀ i, IsCommJordan (A i)] :
