@@ -48,6 +48,32 @@ structure IsCompleteSystem {J ι : Type*} [NonAssocSemiring J] [Fintype ι]
   /-- The members sum to the unit. -/
   sum_eq_one : ∑ i, p i = 1
 
+private theorem aeval_eq_sum_lagrange_of_roots_mem {A : Type*} [CommRing A] [Algebra ℝ A]
+    [IsFormallyReal A] {a : A} (ha : IsIntegral ℝ a) {S : Finset ℝ}
+    (hS : ∀ r ∈ (minpoly ℝ a).roots, r ∈ S) {n : ℕ} (e : Fin n ≃ ↥S) (f : ℝ[X]) :
+    aeval a f = ∑ i, f.eval (e i : ℝ) • aeval a (Lagrange.basis S id (e i : ℝ)) := by
+  classical
+  have hsum :
+      aeval a (∑ i, f.eval (e i : ℝ) • Lagrange.basis S id (e i : ℝ)) = aeval a f := by
+    apply minpoly.aeval_eq_of_eqOn_roots_of_isFormallyReal ha
+    intro r hr
+    let j := e.symm ⟨r, hS r hr⟩
+    have hj : (e j : ℝ) = r := congrArg Subtype.val (e.apply_symm_apply _)
+    simp only [eval_finsetSum, eval_smul, smul_eq_mul]
+    rw [Finset.sum_eq_single j, ← hj]
+    · have h : (Lagrange.basis S id (e j : ℝ)).eval (e j : ℝ) = 1 :=
+        Lagrange.eval_basis_self (v := (id : ℝ → ℝ)) (fun _ _ _ _ h => h) (e j).property
+      rw [h, mul_one]
+    · intro i _ hij
+      have hne : (e i : ℝ) ≠ r := fun h =>
+        hij (e.injective (Subtype.ext (h.trans hj.symm)))
+      have h : (Lagrange.basis S id (e i : ℝ)).eval r = 0 :=
+        Lagrange.eval_basis_of_ne (v := (id : ℝ → ℝ)) hne (hS r hr)
+      rw [h, mul_zero]
+    · simp
+  rw [← hsum, map_sum]
+  exact Finset.sum_congr rfl fun i _ => map_smul (aeval a) _ _
+
 private theorem aeval_lagrange_system {A : Type*} [CommRing A] [Algebra ℝ A]
     [IsFormallyReal A] {a : A} (ha : IsIntegral ℝ a) :
     ∃ (n : ℕ) (p : Fin n → A) (coeff : Fin n → ℝ),
@@ -67,20 +93,8 @@ private theorem aeval_lagrange_system {A : Type*} [CommRing A] [Algebra ℝ A]
   let p (i : Fin n) : A := aeval a (b (c i))
   have hc : Function.Injective c := Subtype.val_injective.comp e.injective
   have hmem (i : Fin n) : c i ∈ S := (e i).property
-  have heval (f : ℝ[X]) : aeval a f = ∑ i, f.eval (c i) • p i := by
-    have hsum : aeval a (∑ i, f.eval (c i) • b (c i)) = aeval a f := by
-      apply minpoly.aeval_eq_of_eqOn_roots_of_isFormallyReal ha
-      intro r hr
-      let j := e.symm ⟨r, Multiset.mem_toFinset.mpr hr⟩
-      have hj : c j = r := congrArg Subtype.val (e.apply_symm_apply _)
-      simp only [eval_finsetSum, eval_smul, smul_eq_mul]
-      rw [Finset.sum_eq_single j, hb _ _ (hmem j) (hj ▸ hmem j), ite_eq_left hj, mul_one, hj]
-      · intro i _ hij
-        have hne : c i ≠ r := fun h => hij (hc (h.trans hj.symm))
-        rw [hb _ _ (hmem i) (hj ▸ hmem j), ite_eq_right hne, mul_zero]
-      · simp
-    rw [← hsum, map_sum]
-    exact Finset.sum_congr rfl fun i _ => map_smul (aeval a) _ _
+  have heval (f : ℝ[X]) : aeval a f = ∑ i, f.eval (c i) • p i :=
+    aeval_eq_sum_lagrange_of_roots_mem ha (fun _ hr => Multiset.mem_toFinset.mpr hr) e f
   refine ⟨n, p, c, ⟨?_, ?_, ?_, ?_⟩, hc, heval⟩
   · intro i hi
     have hmin := minpoly.dvd ℝ a (show aeval a (b (c i)) = 0 from hi)
