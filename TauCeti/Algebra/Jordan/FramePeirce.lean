@@ -23,6 +23,8 @@ the Peirce `1`-spaces, and the off-diagonal blocks are intersections of two Peir
 ## Main results
 
 * The multiplication operators of a complete system commute and add to the identity.
+* A diagonal linear combination acts on each block by the average of the two coefficients.
+  Every partial sum of the members is an idempotent.
 * Products of distinct multiplication operators have range in the corresponding off-diagonal
   block. Scaled by four, they are the off-diagonal projections.
 * `IsCompleteSystem.isInternal_peirceBlock`: the Peirce blocks form an internal direct sum.
@@ -280,6 +282,51 @@ theorem isInternal_peirceBlock [DecidableEq ι] (hp : IsCompleteSystem p) :
     DirectSum.IsInternal (peirceBlock p) :=
   (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
     ⟨hp.iSupIndep_peirceBlock, hp.iSup_peirceBlock_eq_top⟩
+
+omit [Module ℝ J] [SMulCommClass ℝ J J] [IsCommJordan J] in
+/-- Every partial sum of a complete system is an idempotent. -/
+theorem isIdempotentElem_sum (hp : IsCompleteSystem p) (s : Finset ι) :
+    IsIdempotentElem (∑ i ∈ s, p i) := by
+  classical
+  change (∑ i ∈ s, p i) * (∑ i ∈ s, p i) = ∑ i ∈ s, p i
+  rw [Finset.sum_mul_sum]
+  refine Finset.sum_congr rfl fun i hi => ?_
+  rw [Finset.sum_eq_single i (fun j _ hji => hp.orthogonal i j hji.symm)
+    (fun h => False.elim (h hi))]
+  exact (hp.idempotent i).eq
+
+/-- Left multiplication by a diagonal linear combination acts by the average of the
+two indexed coefficients on each Peirce block. -/
+theorem sum_smul_mul_eq_smul_of_mem_peirceBlock [IsScalarTower ℝ J J]
+    (hp : IsCompleteSystem p) (a : ι → ℝ) {i j : ι} {x : J}
+    (hx : x ∈ peirceBlock p s(i, j)) :
+    (∑ k, a k • p k) * x = ((a i + a j) / 2) • x := by
+  classical
+  rw [Finset.sum_mul]
+  by_cases hij : i = j
+  · subst j
+    rw [Finset.sum_eq_single i]
+    · have hfix : p i * x = x := by
+        rw [peirceBlock_diag, mem_peirceSpace, one_smul] at hx
+        exact hx
+      rw [smul_mul_assoc, hfix]
+      module
+    · intro k _ hk
+      rw [smul_mul_assoc, hp.mul_eq_zero_of_mem_peirceBlock hk hk hx, smul_zero]
+    · simp
+  · have hsum := Finset.sum_sdiff (f := fun k => (a k • p k) * x)
+      (Finset.subset_univ ({i, j} : Finset ι))
+    rw [← hsum, Finset.sum_pair hij]
+    have hzero : (∑ k ∈ Finset.univ \ {i, j}, (a k • p k) * x) = 0 := by
+      refine Finset.sum_eq_zero fun k hk => ?_
+      have h := (Finset.mem_sdiff.mp hk).2
+      have hki : k ≠ i := fun e => h (by simp [e])
+      have hkj : k ≠ j := fun e => h (by simp [e])
+      rw [smul_mul_assoc, hp.mul_eq_zero_of_mem_peirceBlock hki hkj hx, smul_zero]
+    rw [peirceBlock_of_ne p hij] at hx
+    rw [hzero, zero_add, smul_mul_assoc, smul_mul_assoc,
+      mem_peirceSpace.mp hx.1, mem_peirceSpace.mp hx.2, invOf_eq_inv]
+    module
 
 end IsCompleteSystem
 
