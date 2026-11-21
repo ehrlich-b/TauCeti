@@ -35,7 +35,7 @@ namespace SymAlg
 variable {R A : Type*} [CommRing R] [Ring A] [Algebra R A]
 
 /-- The symmetrization of an associative ring is a commutative nonassociative ring. -/
-instance [Invertible (2 : A)] : NonAssocCommRing Aˢʸᵐ where
+instance instNonAssocCommRingSym [Invertible (2 : A)] : NonAssocCommRing Aˢʸᵐ where
   __ := (inferInstance : NonAssocRing Aˢʸᵐ)
   mul_comm := SymAlg.mul_comm
 

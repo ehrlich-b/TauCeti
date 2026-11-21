@@ -37,7 +37,8 @@ namespace Matrix
 
 variable {n K : Type*} [Fintype n] [DecidableEq n] [RCLike K]
 
-local instance : Invertible (2 : Matrix n n K) :=
+/-- The matrix ring inherits the inverse of two from its rational scalar action. -/
+local instance invertibleTwoHermitianJordan : Invertible (2 : Matrix n n K) :=
   TauCeti.invertibleTwoOfAlgebraRat _
 
 /-- The real Jordan algebra of Hermitian matrices over a real or complex field. -/

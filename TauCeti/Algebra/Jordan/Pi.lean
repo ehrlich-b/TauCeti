@@ -35,7 +35,8 @@ namespace Pi
 variable {ι : Type*} {A : ι → Type*}
 
 /-- A product of commutative nonassociative rings has the pointwise ring structure. -/
-instance [∀ i, NonAssocCommRing (A i)] : NonAssocCommRing (∀ i, A i) where
+instance instNonAssocCommRingPi [∀ i, NonAssocCommRing (A i)] :
+    NonAssocCommRing (∀ i, A i) where
   __ := (inferInstance : NonAssocRing (∀ i, A i))
   mul_comm x y := funext fun i => mul_comm (x i) (y i)
 

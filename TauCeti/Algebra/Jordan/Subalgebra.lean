@@ -40,7 +40,8 @@ section CommRing
 variable [NonUnitalNonAssocCommRing A] [Module R A]
 
 /-- A product-closed submodule inherits commutative nonassociative multiplication. -/
-instance (S : NonUnitalSubalgebra R A) : NonUnitalNonAssocCommRing S where
+instance instNonUnitalNonAssocCommRingSubtype (S : NonUnitalSubalgebra R A) :
+    NonUnitalNonAssocCommRing S where
   __ := (inferInstance : NonUnitalNonAssocRing S)
   mul_comm x y := Subtype.ext (mul_comm (x : A) (y : A))
 

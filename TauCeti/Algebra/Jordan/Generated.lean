@@ -144,7 +144,7 @@ theorem powerEval_eq_aeval (x : A) :
   (rfl)
 
 /-- A monomial with coefficient one evaluates to the corresponding Jordan power. -/
-@[simp] theorem coe_powerEval_X_pow (x : A) (n : ℕ) :
+theorem coe_powerEval_X_pow (x : A) (n : ℕ) :
     ((powerEval (R := R) x (X ^ n) : powerSubalgebra R x) : A) = jpow x n := by
   induction n with
   | zero => simp only [pow_zero, map_one, jpow_zero]; rfl
