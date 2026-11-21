@@ -51,7 +51,7 @@ instance [IsCommJordan A] (S : NonUnitalSubalgebra R A) : IsCommJordan S where
 
 /-- The induced ring on a subalgebra equipped with an internal multiplicative unit.
 The addition, multiplication and scalar action retain their usual subtype definitions. -/
-@[instance_reducible]
+@[expose, instance_reducible]
 def nonAssocCommRingOfUnit (S : NonUnitalSubalgebra R A) (e : S)
     (he : ∀ x : S, e * x = x) : NonAssocCommRing S where
   __ := (inferInstance : NonUnitalNonAssocCommRing S)
