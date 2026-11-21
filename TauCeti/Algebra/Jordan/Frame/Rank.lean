@@ -5,7 +5,9 @@ Authors: Bryan Ehrlich
 -/
 module
 
-public import TauCeti.Algebra.Jordan.FrameExists
+public import TauCeti.Algebra.Jordan.Frame.Exists
+public import TauCeti.Algebra.Jordan.Spectral
+public import TauCeti.RingTheory.Idempotents.LinearIndependent
 
 /-!
 # Rank bounds for real Jordan algebras
@@ -32,42 +34,29 @@ public section
 
 namespace TauCeti.Jordan
 
-/-- The rank is the supremum of the cardinalities of Jordan frames. -/
+/-- The rank is the supremum of the cardinalities of Jordan frames, with the empty or unbounded
+case assigned the natural-number supremum `0`. -/
 noncomputable def rank (J : Type*) [NonAssocSemiring J] : ℕ :=
   sSup {n : ℕ | ∃ p : Fin n → J, IsJordanFrame p}
 
-section LinearIndependent
-
-variable {K J ι : Type*} [Field K] [NonAssocRing J] [Module K J] [SMulCommClass K J J]
-  [Fintype ι] {p : ι → J}
-
-/-- Members of a complete system are linearly independent. Multiplication by one member
-isolates its coefficient in any linear relation. -/
-theorem IsCompleteSystem.linearIndependent (hp : IsCompleteSystem p) :
-    LinearIndependent K p := by
-  classical
-  refine Fintype.linearIndependent_iff.mpr fun a ha i => ?_
-  have h : p i * (∑ j, a j • p j) = 0 := by rw [ha, mul_zero]
-  rw [Finset.mul_sum, Finset.sum_eq_single i] at h
-  · rw [mul_smul_comm, (hp.idempotent i).eq] at h
-    exact (smul_eq_zero.mp h).resolve_right (hp.nonzero i)
-  · intro j _ hji
-    rw [mul_smul_comm, hp.orthogonal i j hji.symm, smul_zero]
-  · simp
-
-end LinearIndependent
-
 section Bounds
 
-variable {J : Type*} [NonAssocCommRing J] [Module ℝ J] [SMulCommClass ℝ J J]
+variable {J : Type*} [NonAssocCommRing J] [Module ℝ J] [IsScalarTower ℝ J J]
   [Module.Finite ℝ J]
+
+/-- A Jordan frame has at most as many members as the dimension of the algebra. -/
+theorem IsJordanFrame.card_le_finrank {n : ℕ} {p : Fin n → J} (hp : IsJordanFrame p) :
+    n ≤ Module.finrank ℝ J := by
+  have h := hp.toIsCompleteSystem
+  simpa only [Fintype.card_fin] using
+    (linearIndependent_of_pairwise_mul_eq_zero (k := ℝ)
+      h.idempotent (fun _ _ hne => h.orthogonal _ _ hne) h.nonzero).fintype_card_le_finrank
 
 private theorem bddAbove_frameSizes :
     BddAbove {n : ℕ | ∃ p : Fin n → J, IsJordanFrame p} := by
   refine ⟨Module.finrank ℝ J, ?_⟩
   rintro _ ⟨p, hp⟩
-  simpa only [Fintype.card_fin] using
-    (hp.1.linearIndependent (K := ℝ)).fintype_card_le_finrank
+  exact hp.card_le_finrank
 
 /-- A Jordan frame has at most `rank J` members. -/
 theorem IsJordanFrame.card_le_rank {n : ℕ} {p : Fin n → J} (hp : IsJordanFrame p) :
@@ -76,12 +65,10 @@ theorem IsJordanFrame.card_le_rank {n : ℕ} {p : Fin n → J} (hp : IsJordanFra
 
 /-- The rank is at most the real dimension. -/
 theorem rank_le_finrank : rank J ≤ Module.finrank ℝ J :=
-  csSup_le' fun _ ⟨_, hp⟩ => by
-    simpa only [Fintype.card_fin] using
-      (hp.1.linearIndependent (K := ℝ)).fintype_card_le_finrank
+  csSup_le' fun _ ⟨_, hp⟩ => hp.card_le_finrank
 
 /-- There is a Jordan frame whose size is the rank. -/
-theorem exists_jordanFrame_card_rank [IsCommJordan J] :
+theorem exists_jordanFrame_card_rank [SMulCommClass ℝ J J] [IsCommJordan J] :
     ∃ p : Fin (rank J) → J, IsJordanFrame p := by
   exact Nat.sSup_mem ⟨_, exists_isJordanFrame (J := J).choose_spec⟩
     (bddAbove_frameSizes (J := J))
@@ -103,19 +90,14 @@ theorem exists_spectral_frame (x : J) :
   obtain ⟨n, q, hq, heq⟩ := hp.exists_refinement
   let m := Fintype.card (Σ i, Fin (n i))
   let e : Fin m ≃ (Σ i, Fin (n i)) := (Fintype.equivFin _).symm
-  refine ⟨m, q ∘ e, fun j => c (e j).1, ⟨⟨?_, ?_, ?_, ?_⟩, ?_⟩, ?_⟩
-  · exact fun j => hq.1.nonzero (e j)
-  · exact fun j => hq.1.idempotent (e j)
-  · exact fun i j hne => hq.1.orthogonal (e i) (e j) (e.injective.ne hne)
-  · exact (e.sum_comp q).trans hq.1.sum_eq_one
-  · exact fun j => hq.2 (e j)
-  · let f (j : Σ i, Fin (n i)) := c j.1 • q j
-    calc
-      x = ∑ i, c i • p i := h
-      _ = ∑ j, f j := by
-        rw [Fintype.sum_sigma]
-        exact Finset.sum_congr rfl fun i _ => by simp only [f, ← Finset.smul_sum, heq]
-      _ = ∑ j, f (e j) := (e.sum_comp f).symm
+  refine ⟨m, q ∘ e, fun j => c (e j).1, hq.reindex e, ?_⟩
+  let f (j : Σ i, Fin (n i)) := c j.1 • q j
+  calc
+    x = ∑ i, c i • p i := h
+    _ = ∑ j, f j := by
+      rw [Fintype.sum_sigma]
+      exact Finset.sum_congr rfl fun i _ => by simp only [f, ← Finset.smul_sum, heq]
+    _ = ∑ j, f (e j) := (e.sum_comp f).symm
 
 end Spectral
 

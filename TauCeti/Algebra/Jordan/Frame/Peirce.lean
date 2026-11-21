@@ -6,10 +6,12 @@ Authors: Bryan Ehrlich
 module
 
 public import Mathlib.Algebra.CharP.Invertible
+public import Mathlib.Algebra.Ring.Idempotent
+public import Mathlib.Basic.Real.Basic
 public import Mathlib.Data.Sym.Sym2
 public import Mathlib.Algebra.DirectSum.Module
 public import TauCeti.Algebra.Jordan.Peirce
-public import TauCeti.Algebra.Jordan.Spectral
+public import TauCeti.Algebra.Jordan.Frame.Basic
 
 import Mathlib.Tactic.Module
 import Mathlib.Tactic.NormNum
@@ -86,6 +88,19 @@ noncomputable def peirceBlockProj (p : ι → J) (i j : ι) : Module.End ℝ J :
   classical
   exact if i = j then peirceOne ℝ (p i) else
     (4 : ℝ) • (LinearMap.mulLeft ℝ (p i) * LinearMap.mulLeft ℝ (p j))
+
+/-- On the diagonal, the block projection is the Peirce one projection. -/
+@[simp] theorem peirceBlockProj_diag (p : ι → J) (i : ι) :
+    peirceBlockProj p i i = peirceOne ℝ (p i) := by
+  classical
+  simp [peirceBlockProj]
+
+/-- Off the diagonal, the block projection is four times the composed multiplication maps. -/
+theorem peirceBlockProj_of_ne (p : ι → J) {i j : ι} (h : i ≠ j) :
+    peirceBlockProj p i j =
+      (4 : ℝ) • (LinearMap.mulLeft ℝ (p i) * LinearMap.mulLeft ℝ (p j)) := by
+  classical
+  simp [peirceBlockProj, h]
 
 end Blocks
 
@@ -201,15 +216,16 @@ namespace IsCompleteSystem
 variable [Fintype ι] [IsCommJordan J] {p : ι → J}
 
 omit [Fintype ι] [IsCommJordan J] in
-private theorem peirceBlockProj_apply_eq_self {i j : ι} {x : J}
+/-- The block projection fixes every vector of its Peirce block. -/
+theorem peirceBlockProj_apply_eq_self {i j : ι} {x : J}
     (hx : x ∈ peirceBlock p s(i, j)) : peirceBlockProj p i j x = x := by
   classical
   by_cases h : i = j
   · subst j
     rw [peirceBlock_diag] at hx
-    simpa [peirceBlockProj] using peirceOne_of_mem_peirceSpace_one hx
+    simpa only [peirceBlockProj_diag] using peirceOne_of_mem_peirceSpace_one hx
   · rw [peirceBlock_of_ne p h] at hx
-    rw [peirceBlockProj, ite_eq_right h]
+    rw [peirceBlockProj_of_ne _ h]
     change (4 : ℝ) • (p i * (p j * x)) = x
     rw [mem_peirceSpace.mp hx.2, mul_smul_comm, mem_peirceSpace.mp hx.1]
     norm_num [invOf_eq_inv, smul_smul]
@@ -223,18 +239,20 @@ theorem range_peirceBlockProj (hp : IsCompleteSystem p) (i j : ι) :
     by_cases h : i = j
     · subst j
       rw [peirceBlock_diag]
-      simpa [peirceBlockProj] using peirceOne_mem_peirceSpace (R := ℝ) (hp.idempotent i).eq y
-    · rw [peirceBlockProj, ite_eq_right h]
+      simpa only [peirceBlockProj_diag] using
+        peirceOne_mem_peirceSpace (R := ℝ) (hp.idempotent i).eq y
+    · rw [peirceBlockProj_of_ne _ h]
       exact Submodule.smul_mem _ _ (hp.mul_mul_mem_peirceBlock h y)
   · exact fun x hx => ⟨x, peirceBlockProj_apply_eq_self hx⟩
 
-private theorem peirceBlockProj_apply_eq_zero (hp : IsCompleteSystem p) {i j k l : ι}
+/-- The block projection kills every vector in a different Peirce block. -/
+theorem peirceBlockProj_apply_eq_zero (hp : IsCompleteSystem p) {i j k l : ι}
     (hne : s(k, l) ≠ s(i, j)) {x : J} (hx : x ∈ peirceBlock p s(k, l)) :
     peirceBlockProj p i j x = 0 := by
   classical
   by_cases hij : i = j
   · subst j
-    simp only [peirceBlockProj]
+    rw [peirceBlockProj_diag]
     by_cases h : i = k ∨ i = l
     · have hkl : k ≠ l := by
         rintro rfl
@@ -248,7 +266,7 @@ private theorem peirceBlockProj_apply_eq_zero (hp : IsCompleteSystem p) {i j k l
     · exact peirceOne_of_mem_peirceSpace_zero
         (mem_peirceSpace.mpr (by simp [hp.mul_eq_zero_of_mem_peirceBlock
           (fun h' => h (Or.inl h')) (fun h' => h (Or.inr h')) hx]))
-  · rw [peirceBlockProj, ite_eq_right hij]
+  · rw [peirceBlockProj_of_ne _ hij]
     change (4 : ℝ) • (p i * (p j * x)) = 0
     have hout : (i ≠ k ∧ i ≠ l) ∨ (j ≠ k ∧ j ≠ l) := by
       have h := fun heq : (k, l) = (i, j) ∨ (k, l) = (j, i) =>

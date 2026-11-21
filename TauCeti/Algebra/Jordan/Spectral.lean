@@ -5,6 +5,7 @@ Authors: Bryan Ehrlich
 -/
 module
 
+public import TauCeti.Algebra.Jordan.Frame.Basic
 public import TauCeti.Algebra.Jordan.Generated
 public import TauCeti.Algebra.Polynomial.RealClosed.FormallyReal
 public import Mathlib.Algebra.Ring.Idempotent
@@ -18,7 +19,6 @@ distinct roots of its minimal polynomial yield the spectral idempotents.
 
 ## Main results
 
-* `IsCompleteSystem`: a finite family of nonzero orthogonal idempotents summing to the unit.
 * `spectralResolution`: each element of a formally real finite-dimensional Jordan algebra
   admits a spectral resolution with distinct real coefficients. Its idempotents lie in the
   span of powers and evaluate every polynomial by its values on the coefficients.
@@ -35,18 +35,6 @@ public section
 namespace TauCeti.Jordan
 
 open Polynomial
-
-/-- A finite complete system consists of nonzero orthogonal idempotents that sum to the unit. -/
-structure IsCompleteSystem {J ι : Type*} [NonAssocSemiring J] [Fintype ι]
-    (p : ι → J) : Prop where
-  /-- Every member is nonzero. -/
-  nonzero : ∀ i, p i ≠ 0
-  /-- Every member is an idempotent. -/
-  idempotent : ∀ i, IsIdempotentElem (p i)
-  /-- Distinct members are orthogonal. -/
-  orthogonal : ∀ i j, i ≠ j → p i * p j = 0
-  /-- The members sum to the unit. -/
-  sum_eq_one : ∑ i, p i = 1
 
 private theorem aeval_eq_sum_lagrange_of_roots_mem {A : Type*} [CommRing A] [Algebra ℝ A]
     [IsFormallyReal A] {a : A} (ha : IsIntegral ℝ a) {S : Finset ℝ}

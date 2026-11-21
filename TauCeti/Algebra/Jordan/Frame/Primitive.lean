@@ -6,7 +6,7 @@ Authors: Bryan Ehrlich
 module
 
 public import Mathlib.Algebra.CharP.Invertible
-public import TauCeti.Algebra.Jordan.PeirceSubalgebra
+public import TauCeti.Algebra.Jordan.Peirce.Subalgebra
 public import TauCeti.Algebra.Jordan.Spectral
 
 /-!
@@ -17,7 +17,6 @@ Peirce `1`-space. The spectral resolution in this subalgebra characterizes primi
 
 ## Main results
 
-* `IsPrimitive` and `IsJordanFrame`: primitive idempotents and complete systems of them.
 * `isPrimitive_iff_peirceSpace_one_eq_span`: a nonzero idempotent is primitive exactly when
   its Peirce `1`-space is the line it spans.
 
@@ -31,20 +30,6 @@ Peirce `1`-space. The spectral resolution in this subalgebra characterizes primi
 public section
 
 namespace TauCeti.Jordan
-
-/-- An idempotent is primitive when it is nonzero and has no proper nonzero idempotent below it. -/
-structure IsPrimitive {J : Type*} [Mul J] [Zero J] (p : J) : Prop where
-  /-- A primitive idempotent is nonzero. -/
-  nonzero : p ≠ 0
-  /-- A primitive element is idempotent. -/
-  idempotent : IsIdempotentElem p
-  /-- Every idempotent fixed by left multiplication by `p` is zero or `p`. -/
-  eq_zero_or_eq : ∀ q : J, IsIdempotentElem q → p * q = q → q = 0 ∨ q = p
-
-/-- A Jordan frame is a complete system of primitive idempotents. -/
-@[expose]
-def IsJordanFrame {J ι : Type*} [NonAssocSemiring J] [Fintype ι] (p : ι → J) : Prop :=
-  IsCompleteSystem p ∧ ∀ i, IsPrimitive (p i)
 
 section PeirceSpace
 
@@ -91,7 +76,7 @@ theorem IsPrimitive.peirceSpace_one_eq_span {c : J} (hc : IsPrimitive c) :
     rintro x (rfl : x = c)
     exact mem_peirceSpace.mpr (by simpa using hc.idempotent.eq)
 
-/-- A nonzero idempotent is primitive exactly when its Peirce `1)-space is its span. -/
+/-- A nonzero idempotent is primitive exactly when its Peirce `1`-space is its span. -/
 theorem isPrimitive_iff_peirceSpace_one_eq_span {c : J} (hc : IsIdempotentElem c) (h₀ : c ≠ 0) :
     IsPrimitive c ↔ peirceSpace ℝ c 1 = Submodule.span ℝ {c} :=
   ⟨IsPrimitive.peirceSpace_one_eq_span, IsPrimitive.of_peirceSpace_one_eq_span hc h₀⟩

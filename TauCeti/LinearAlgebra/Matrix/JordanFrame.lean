@@ -6,7 +6,7 @@ Authors: Bryan Ehrlich
 module
 
 public import Mathlib.Data.Matrix.Basis
-public import TauCeti.Algebra.Jordan.Primitive
+public import TauCeti.Algebra.Jordan.Frame.Primitive
 public import TauCeti.LinearAlgebra.Matrix.Jordan
 
 import Mathlib.Tactic.FinCases

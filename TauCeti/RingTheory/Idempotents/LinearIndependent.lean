@@ -27,24 +27,39 @@ of the right size a *basis*.
 
 ## Main results
 
-* `OrthogonalIdempotents.linearIndependent`: **a family of pairwise orthogonal nonzero
-  idempotents is linearly independent.**
+* `TauCeti.linearIndependent_of_pairwise_mul_eq_zero`: pairwise orthogonal nonzero idempotents
+  are linearly independent, including in nonassociative rings.
+* `OrthogonalIdempotents.linearIndependent`: the formulation for bundled orthogonal idempotents.
 * `OrthogonalIdempotents.linearIndependent_sigma`: cornerwise linearly independent families form
   one linearly independent family (over any semiring).
 -/
 
 public section
 
+/-- A family of nonzero idempotents with zero products at distinct indices is linearly
+independent. This uses distributivity and compatibility with scalars. -/
+theorem TauCeti.linearIndependent_of_pairwise_mul_eq_zero {k A ι : Type*}
+    [Ring k] [IsCancelMulZero k] [NonUnitalNonAssocRing A] [Module k A]
+    [IsScalarTower k A A] [Module.IsTorsionFree k A] {e : ι → A}
+    (hide : ∀ i, IsIdempotentElem (e i)) (hortho : Pairwise fun i j => e i * e j = 0)
+    (hne : ∀ i, e i ≠ 0) : LinearIndependent k e := by
+  classical
+  have hmul (i j : ι) : e i * e j = if i = j then e i else 0 := by
+    split
+    · subst j
+      exact (hide i).eq
+    · exact hortho ‹_›
+  rw [linearIndependent_iff']
+  intro s g hg j hj
+  simpa [Finset.sum_mul, smul_mul_assoc, hmul, hne j, hj] using congrArg (· * e j) hg
+
 /-- **A family of pairwise orthogonal nonzero idempotents of a ring `A` is linearly independent**
 over a ring `k` with cancellative multiplication, provided `A` is a torsion-free `k`-module on which
 `k` acts compatibly with multiplication (for example, a torsion-free `k`-algebra). -/
 theorem OrthogonalIdempotents.linearIndependent {k A ι : Type*} [Ring k] [IsCancelMulZero k]
     [Ring A] [Module k A] [IsScalarTower k A A] [Module.IsTorsionFree k A] {e : ι → A}
-    (he : OrthogonalIdempotents e) (he₀ : ∀ i, e i ≠ 0) : LinearIndependent k e := by
-  classical
-  rw [linearIndependent_iff']
-  intro s g hg j hj
-  simpa [Finset.sum_mul, smul_mul_assoc, he.mul_eq, he₀ j, hj] using congrArg (· * e j) hg
+    (he : OrthogonalIdempotents e) (he₀ : ∀ i, e i ≠ 0) : LinearIndependent k e :=
+  TauCeti.linearIndependent_of_pairwise_mul_eq_zero he.idem he.ortho he₀
 
 /-- Cutting an element `x` of the `(j, i)`-corner of an orthogonal family (`e j * x = x` and
 `x * e i = x`) by two members of the family leaves `x` when those members are `e j` and `e i`,

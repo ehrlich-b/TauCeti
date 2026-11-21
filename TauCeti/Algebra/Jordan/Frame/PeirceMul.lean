@@ -5,8 +5,8 @@ Authors: Bryan Ehrlich
 -/
 module
 
-public import TauCeti.Algebra.Jordan.FramePeirce
-public import TauCeti.Algebra.Jordan.Primitive
+public import TauCeti.Algebra.Jordan.Frame.Peirce
+public import TauCeti.Algebra.Jordan.Frame.Primitive
 
 /-!
 # Multiplication of Peirce blocks
@@ -122,6 +122,6 @@ theorem IsJordanFrame.peirceBlock_diag_eq_span [IsScalarTower ℝ J J] [IsCommJo
     [Module.Finite ℝ J] [IsFormallyReal J] (hp : IsJordanFrame p) (i : ι) :
     peirceBlock p s(i, i) = Submodule.span ℝ {p i} := by
   rw [peirceBlock_diag]
-  exact (hp.2 i).peirceSpace_one_eq_span
+  exact (hp.isPrimitive i).peirceSpace_one_eq_span
 
 end TauCeti.Jordan

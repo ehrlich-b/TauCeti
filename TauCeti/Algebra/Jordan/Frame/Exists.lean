@@ -6,8 +6,11 @@ Authors: Bryan Ehrlich
 module
 
 public import Mathlib.Algebra.BigOperators.Fin
+public import Mathlib.Algebra.CharP.Invertible
 public import Mathlib.Data.Fintype.Sigma
-public import TauCeti.Algebra.Jordan.Primitive
+public import Mathlib.Basic.Real.Basic
+public import TauCeti.Algebra.Jordan.Frame.Basic
+public import TauCeti.Algebra.Jordan.Peirce.Subalgebra
 
 /-!
 # Existence of Jordan frames
