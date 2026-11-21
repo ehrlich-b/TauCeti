@@ -18,7 +18,8 @@ Its identities, composition and inverse construction are already available there
 
 * `AddMonoidHom.map_mul_of_map_mul_self`: polarization recovers product preservation
   from square preservation when doubling is injective on the target.
-* `NonUnitalAlgHom.map_one_of_surjective`: a surjective Jordan homomorphism preserves the unit.
+* `MulHomClass.map_one_of_mem_range`: a multiplicative map preserves the unit when its range
+  contains the unit, in particular when it is surjective.
 
 ## References
 
@@ -44,11 +45,11 @@ theorem AddMonoidHom.map_mul_of_map_mul_self [NonUnitalNonAssocCommSemiring A]
   simp only [← add_assoc] at hcross
   exact h₂ (by simpa only [two_nsmul] using add_right_cancel hcross)
 
-/-- A surjective multiplicative map of unital algebras sends the unit to the unit. -/
-theorem NonUnitalAlgHom.map_one_of_surjective {R : Type*} [Monoid R]
-    [NonAssocSemiring A] [NonAssocSemiring B] [DistribMulAction R A] [DistribMulAction R B]
-    (f : A →ₙₐ[R] B) (hf : Function.Surjective f) : f 1 = 1 := by
-  obtain ⟨x, hx⟩ := hf 1
+/-- A multiplicative map sends the unit to the unit if the latter lies in its range. -/
+theorem MulHomClass.map_one_of_mem_range {F : Type*} [MulOneClass A] [MulOneClass B]
+    [FunLike F A B] [MulHomClass F A B] (f : F) (hf : (1 : B) ∈ Set.range f) :
+    f 1 = 1 := by
+  obtain ⟨x, hx⟩ := hf
   calc
     f 1 = f 1 * f x := by rw [hx, mul_one]
     _ = f (1 * x) := (map_mul f 1 x).symm
