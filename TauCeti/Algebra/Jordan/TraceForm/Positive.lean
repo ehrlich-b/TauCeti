@@ -85,16 +85,12 @@ Jordan algebra. -/
 theorem traceForm_self_pos [IsCommJordan J] [Module.Finite ℝ J] [IsFormallyReal J] {x : J}
     (hx : x ≠ 0) : 0 < traceForm ℝ x x := by
   classical
-  obtain ⟨n, p, c, hp, _, h, _, _⟩ := spectralResolution x
-  have hdiag (i : Fin n) : p i * (∑ j, c j • p j) = c i • p i := by
-    rw [Finset.mul_sum, Finset.sum_eq_single i]
-    · rw [mul_smul_comm, hp.idempotent i]
-    · intro j _ hij
-      rw [mul_smul_comm, hp.orthogonal i j hij.symm, smul_zero]
-    · simp
+  obtain ⟨n, p, c, hp, _, h, _, heval⟩ := spectralResolution x
   have hs : x * x = ∑ i, (c i * c i) • p i := by
-    rw [h, Finset.sum_mul]
-    exact Finset.sum_congr rfl fun i _ => by rw [smul_mul_assoc, hdiag, smul_smul]
+    have heval₂ := heval (Polynomial.X ^ 2)
+    rw [coe_powerEval_X_pow] at heval₂
+    simp only [Polynomial.eval_pow, Polynomial.eval_X] at heval₂
+    simpa only [jpow_succ, jpow_zero, mul_one, pow_two] using heval₂
   have hpos (i : Fin n) : 0 < mulTrace ℝ (p i) :=
     zero_lt_one.trans_le (one_le_mulTrace_of_isIdempotentElem (hp.idempotent i) (hp.nonzero i))
   obtain ⟨i, hi⟩ : ∃ i, c i ≠ 0 := by
